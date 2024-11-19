@@ -112,7 +112,7 @@ void loop() {
         break;
 
       case LEFT:
-        if (currentScreen < 0) {
+        if (currentScreen > 0) {
           currentScreen--;
         }
         else {
