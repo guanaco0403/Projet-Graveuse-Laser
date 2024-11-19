@@ -2,6 +2,36 @@ const int deadzone = 50;
 int joystickXVal, joystickYVal;
 const int MaxSpeed = 4000;
 
+bool joyPressOldState = false;
+
+JoyInput CheckInputs() {
+  if (digitalRead(Joy_Switch) == LOW && joyPressOldState == false) {
+    joyPressOldState = true;
+    delay(100);
+    return PRESS;
+  } else if (digitalRead(Joy_Switch) == HIGH && joyPressOldState == true) {
+    joyPressOldState = false;
+    delay(100);
+  }
+
+  joystickXVal = analogRead(JoyX) - 512;
+  joystickYVal = analogRead(JoyY) - 512;
+  if (joystickXVal > 400) {
+    delay(350);
+    return RIGHT;
+  } else if (joystickXVal < -400) {
+    delay(350);
+    return LEFT;
+  } else if (joystickYVal > 400) {
+    delay(350);
+    return UP;
+  } else if (joystickYVal < -400) {
+    delay(350);
+    return DOWN;
+  }
+  return NONE;
+}
+
 void ManualMotorMove() {
   joystickXVal = analogRead(JoyX) - 512;
   joystickYVal = analogRead(JoyY) - 512;

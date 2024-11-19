@@ -1,3 +1,20 @@
+void DisplayCurrentScreen() {
+  switch (currentScreen) {
+    case 0:
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Screen 0");
+      break;
+    case 1:
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Screen 1");
+      break;
+  }
+}
+
+
+
 void PrintProgressBar(int percent, int line) {
   lcd.setCursor(0, 1);
   lcd.print("[");
