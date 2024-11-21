@@ -117,6 +117,7 @@ void Grave() {
   int Speed = 1000;
   int numInstructions = sizeof(Lettres_IESN) / sizeof(Lettres_IESN[0]);
   int i = 0;
+  long startMillis = millis();
 
   while (i < numInstructions) {
     if (Lettres_IESN[i].engrave == true) {
@@ -130,7 +131,14 @@ void Grave() {
     i++;
     GravingPercent(i, numInstructions);
   }
+  int engravingTime = (millis() - startMillis)/1000; // en secondes
+  Serial.println(millis() - startMillis);
+  Serial.println(engravingTime);
+  totalEngravingTime = totalEngravingTime + engravingTime;
+  totalEngravingCount += 1;
+  saveEEPROM_Data();
   GoTo(0, 0);
+  oldScreen = 255;
 }
 
 void GravingPercent(float currentStep, float maxSteps) {

@@ -33,6 +33,12 @@ JoyInput CheckInputs() {
 }
 
 void ManualMotorMove() {
+  if (digitalRead(Joy_Switch) == LOW) {
+    stepper_X.stop();
+    stepper_Y.stop();
+    currentScreen = 0;
+  }
+
   joystickXVal = analogRead(JoyX) - 512;
   joystickYVal = analogRead(JoyY) - 512;
 

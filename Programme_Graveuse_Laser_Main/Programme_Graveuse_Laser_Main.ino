@@ -1,5 +1,6 @@
 #include <AccelStepper.h>
 #include <LiquidCrystal_I2C.h>
+#include <EEPROM.h>
 
 #define laser 2
 #define stepX_dir 22
@@ -19,6 +20,10 @@ AccelStepper stepper_X(AccelStepper::DRIVER, stepX_step, stepX_dir);
 AccelStepper stepper_Y(AccelStepper::DRIVER, stepY_step, stepY_dir);
 
 LiquidCrystal_I2C lcd(0x27, 20, 4);
+
+// Donnees Statistiques
+int totalEngravingCount = 0;
+int totalEngravingTime = 0;
 
 byte currentScreen = 0;
 byte oldScreen = 255;
@@ -64,25 +69,28 @@ void setup() {
 
   delay(2000);
 
-  /*lcd.clear();
-    lcd.setCursor(3, 0);
-    lcd.print("Laser Engraver");
-    // Homing process
-    //Serial.println("Homing X Axis");
-    lcd.setCursor(0, 2);
-    lcd.print("   Homing X Axis    ");
-    Home(stepper_X, endX);
-    //Serial.println("Homing Y Axis");
-    lcd.setCursor(0, 2);
-    lcd.print("   Homing Y Axis    ");
-    Home(stepper_Y, endY);
+  lcd.clear();
+  lcd.setCursor(3, 0);
+  lcd.print("Laser Engraver");
+  // Homing process
+  //Serial.println("Homing X Axis");
+  lcd.setCursor(0, 2);
+  lcd.print("   Homing X Axis    ");
+  Home(stepper_X, endX);
+  //Serial.println("Homing Y Axis");
+  lcd.setCursor(0, 2);
+  lcd.print("   Homing Y Axis    ");
+  Home(stepper_Y, endY);
 
-    //GoTo(1000, 1000);
-    //analogWrite(3, 1);
-    //GoTo(6400, 0);
-    //while(true){;}
-    lcd.setCursor(0, 2);
-    lcd.print("    Laser Ready    ");*/
+  //GoTo(1000, 1000);
+  //analogWrite(3, 1);
+  //GoTo(6400, 0);
+  //while(true){;}
+  lcd.setCursor(0, 2);
+  lcd.print("    Laser Ready    ");
+  //EEPROM.put(0, 0);
+  //EEPROM.put(3, 0);
+  GetEEPROM_Data();
 }
 
 void loop() {
@@ -99,26 +107,44 @@ void loop() {
     oldScreen = currentScreen;
   }
 
-  JoyInput input = CheckInputs();
-  if (input != NONE) {
-    switch (input) {
-      case RIGHT:
-        if (currentScreen < 1) {
-          currentScreen++;
-        }
-        else {
-          currentScreen = 0;
-        }
-        break;
+  if (currentScreen == 40) {
+    ManualMotorMove();
+  }
 
-      case LEFT:
-        if (currentScreen > 0) {
-          currentScreen--;
-        }
-        else {
-          currentScreen = 1;
-        }
-        break;
+  if (currentScreen <= 3) {
+    JoyInput input = CheckInputs();
+    if (input != NONE) {
+      switch (input) {
+        case PRESS:
+          if (currentScreen == 0) {
+            stepper_X.setMaxSpeed(4000);
+            stepper_X.setAcceleration(8000);
+            stepper_Y.setMaxSpeed(4000);
+            stepper_Y.setAcceleration(8000);
+            Grave();
+          } else if (currentScreen == 2) {
+            currentScreen = 40;
+            delay(300);
+          }
+          break;
+        case RIGHT:
+          if (currentScreen < 3) {
+            currentScreen++;
+          }
+          else {
+            currentScreen = 0;
+          }
+          break;
+
+        case LEFT:
+          if (currentScreen > 0) {
+            currentScreen--;
+          }
+          else {
+            currentScreen = 3;
+          }
+          break;
+      }
     }
   }
 }
