@@ -12,6 +12,7 @@
 #define JoyX A2
 #define JoyY A3
 #define Joy_Switch 26
+#define ARU 18
 
 #define MAX_X 6400 // 400 step = 1cm
 #define MAX_Y 6000
@@ -27,6 +28,8 @@ int totalEngravingTime = 0;
 
 byte currentScreen = 0;
 byte oldScreen = 255;
+
+bool SystemState = true;
 
 enum JoyInput {
   NONE,
@@ -48,6 +51,9 @@ void setup() {
   pinMode(endY, INPUT_PULLUP);
   pinMode(laser, OUTPUT);
   pinMode(Joy_Switch, INPUT_PULLUP);
+  pinMode(ARU, INPUT_PULLUP);
+
+  attachInterrupt(digitalPinToInterrupt(ARU), ARU_INTERRUPT , FALLING);
 
   stepper_X.setMaxSpeed(4000);      // Max speed (steps per second)
   stepper_X.setAcceleration(8000);  // Acceleration (steps per second^2)
@@ -69,7 +75,7 @@ void setup() {
 
   delay(2000);
 
-  lcd.clear();
+  /*lcd.clear();
   lcd.setCursor(3, 0);
   lcd.print("Laser Engraver");
   // Homing process
@@ -80,7 +86,8 @@ void setup() {
   //Serial.println("Homing Y Axis");
   lcd.setCursor(0, 2);
   lcd.print("   Homing Y Axis    ");
-  Home(stepper_Y, endY);
+  Home(stepper_Y, endY);*/
+  AutoHome();
 
   //GoTo(1000, 1000);
   //analogWrite(3, 1);
@@ -109,6 +116,14 @@ void loop() {
 
   if (currentScreen == 40) {
     ManualMotorMove();
+  }
+  else if (currentScreen == 100) {
+    JoyInput input = CheckInputs();
+    if (input == PRESS && digitalRead(ARU) == HIGH) {
+      SystemState = true;
+      AutoHome();
+      currentScreen = 0;
+    }
   }
 
   if (currentScreen <= 3) {
@@ -149,9 +164,24 @@ void loop() {
   }
 }
 
-void Home(AccelStepper stepper, char sensor) {
+void AutoHome() {
+  lcd.clear();
+  lcd.setCursor(3, 0);
+  lcd.print("Laser Engraver");
+  lcd.setCursor(0, 2);
+  lcd.print("   Homing X Axis    ");
+  HomeAxis(stepper_X, endX);
+  lcd.setCursor(0, 2);
+  lcd.print("   Homing Y Axis    ");
+  HomeAxis(stepper_Y, endY);
+}
+
+void HomeAxis(AccelStepper stepper, char sensor) {
   stepper.setSpeed(-3000);  // Set speed to move toward the endstop (negative direction)
   while (digitalRead(sensor) == HIGH) {
+    if (SystemState == false) { // cas d'un ARU
+      return;
+    }
     stepper.runSpeed();  // Keep moving until the endstop is triggered
   }
 
@@ -162,17 +192,24 @@ void Home(AccelStepper stepper, char sensor) {
   stepper.setSpeed(1000);  // Move away slowly
   stepper.move(400);  // Move a small amount away from the endstop
   while (stepper.distanceToGo() != 0) {
+    if (SystemState == false) { // cas d'un ARU
+      return;
+    }
     stepper.run();  // Run until we've moved a small distance away
   }
 
   // Re-home at slower speed
   stepper.setSpeed(-500);  // Slow speed toward endstop
   while (digitalRead(sensor) == HIGH) {
+    if (SystemState == false) { // cas d'un ARU
+      return;
+    }
     stepper.runSpeed();  // Re-home to improve accuracy
   }
 
   stepper.stop();  // Stop motor at home position
   stepper.setCurrentPosition(0);  // Reset position to 0 again (accurate home position)
+  Serial.println(stepper.currentPosition());
 }
 
 void GoTo(int X, int Y) {
@@ -188,6 +225,10 @@ void GoTo_No_Accel(int X, int Y, int Speed) {
   stepper_X.moveTo(X);
   stepper_Y.moveTo(Y);
   while (stepper_X.distanceToGo() != 0 || stepper_Y.distanceToGo() != 0) {
+    if (SystemState == false) { // cas d'un ARU
+      return;
+    }
+
     stepper_X.setSpeed(Speed);
     stepper_Y.setSpeed(Speed);
     stepper_X.runSpeedToPosition();
@@ -231,6 +272,10 @@ void GoTo_AdaptedSpeed(int targetX, int targetY, int baseSpeed) {
 
   // Run both steppers until they reach the target
   while (stepper_X.distanceToGo() != 0 || stepper_Y.distanceToGo() != 0) {
+    if (SystemState == false) { // cas d'un ARU
+      return;
+    }
+
     stepper_X.setSpeed(speedX);
     stepper_Y.setSpeed(speedY);
     stepper_X.runSpeedToPosition();
@@ -245,11 +290,11 @@ void SetLaser(byte power) {
     analogWrite(laser, 0);
     Serial.println("Laser Power OFF");
   }
-  else if (power == 1) {
+  else if (power == 1 && SystemState) {
     analogWrite(laser, 1);
     Serial.println("Laser Power PWM: 1");
   }
-  else {
+  else if (SystemState) {
     int pwmValue = map(power, 2, 100, 5, 255);
     analogWrite(laser, pwmValue);
     Serial.print("Laser Power PWM: ");

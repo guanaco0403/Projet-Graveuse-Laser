@@ -109,9 +109,9 @@ void Grave() {
   lcd.setCursor(2, 0);
   lcd.print("Engraving [0%]");
   /*lcd.setCursor(0, 1);
-  lcd.print("[");
-  lcd.setCursor(19, 1);
-  lcd.print("]");*/
+    lcd.print("[");
+    lcd.setCursor(19, 1);
+    lcd.print("]");*/
   PrintProgressBar(0, 1);
 
   int Speed = 1000;
@@ -120,6 +120,10 @@ void Grave() {
   long startMillis = millis();
 
   while (i < numInstructions) {
+    if (SystemState == false) { // cas d'un ARU
+      return;
+    }
+
     if (Lettres_IESN[i].engrave == true) {
       SetLaser(15);
       GoTo_AdaptedSpeed(Lettres_IESN[i].x, Lettres_IESN[i].y, Speed);
@@ -131,7 +135,11 @@ void Grave() {
     i++;
     GravingPercent(i, numInstructions);
   }
-  int engravingTime = (millis() - startMillis)/1000; // en secondes
+  if (SystemState == false) { // cas d'un ARU
+    return;
+  }
+
+  int engravingTime = (millis() - startMillis) / 1000; // en secondes
   Serial.println(millis() - startMillis);
   Serial.println(engravingTime);
   totalEngravingTime = totalEngravingTime + engravingTime;

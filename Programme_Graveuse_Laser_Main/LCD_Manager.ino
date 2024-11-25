@@ -47,6 +47,17 @@ void DisplayCurrentScreen() {
       lcd.setCursor(6, 1);
       lcd.print("Manual Mode");
       break;
+    case 100:
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("====================");
+      lcd.setCursor(2, 1);
+      lcd.print("[EMERGENCY STOP]");
+      lcd.setCursor(0, 2);
+      lcd.print("====================");
+      lcd.setCursor(2, 3);
+      lcd.print("[PRESS] to clear");
+      break;
   }
 }
 
