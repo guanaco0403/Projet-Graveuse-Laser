@@ -7,13 +7,6 @@ class Instruction {
 
 Instruction Lettres_IESN[] = {
   // I
-  /*{0, 3200, false},
-    {800, 3200, true},
-    {400, 3200, false},
-    {400, 4000, true},
-    {0, 4000, false},
-    {800, 4000, true},*/
-
   {0, 500, false},
   {1200, 500, true},
   {1200, 700, true},
@@ -29,13 +22,6 @@ Instruction Lettres_IESN[] = {
   {0, 500, true},
 
   // E
-  /*{1800, 3200, false},
-    {1000, 3200, true},
-    {1000, 4000, true},
-    {1800, 4000, true},
-    {1000, 3600, false},
-    {1400, 3600, true},*/
-
   {1600, 500, false},
   {2800, 500, true},
   {2800, 700, true},
@@ -51,17 +37,6 @@ Instruction Lettres_IESN[] = {
   {1600, 500, true},
 
   // S
-  /*{2800, 3200, false},
-    {2200, 3200, true},
-    {2000, 3300, true},
-    {2000, 3500, true},
-    {2200, 3600, true},
-    {2600, 3600, true},
-    {2800, 3700, true},
-    {2800, 3900, true},
-    {2600, 4000, true},
-    {2000, 4000, true},*/
-
   {3600, 500, false},
   {4400, 500, true},
   {4400, 700, true},
@@ -85,11 +60,6 @@ Instruction Lettres_IESN[] = {
   {3500, 500, true},
 
   // N
-  /*{3800, 3200, false},
-    {3800, 4000, true},
-    {3000, 3200, true},
-    {3000, 4000, true}*/
-
   {4800, 500, false},
   {5100, 500, true},
   {5800, 1900, true},
@@ -101,23 +71,31 @@ Instruction Lettres_IESN[] = {
   {5000, 2100, true},
   {4800, 2100, true},
   {4800, 500, true},
-
 };
 
 void Grave() {
+  int Speed = mainSpeed*40;
+  int numInstructions = sizeof(Lettres_IESN) / sizeof(Lettres_IESN[0]);
+  int i = 0;
+
+  // Auto Homing pour la sécurité
+  stepper_X.stop();
+  stepper_Y.stop();
+  AutoHome();
+  //
+
   lcd.clear();
   lcd.setCursor(2, 0);
   lcd.print("Engraving [0%]");
-  /*lcd.setCursor(0, 1);
-    lcd.print("[");
-    lcd.setCursor(19, 1);
-    lcd.print("]");*/
   PrintProgressBar(0, 1);
 
-  int Speed = 1000;
-  int numInstructions = sizeof(Lettres_IESN) / sizeof(Lettres_IESN[0]);
-  int i = 0;
+  int computedTime = ComputeEngravingTime(Speed, numInstructions, 0);
+  lcd.setCursor(10, 2);
+  lcd.print("ETA: ");
+  lcd.print(SecsToTimeString(computedTime));
+
   long startMillis = millis();
+  long oldUpdate = 0;
 
   while (i < numInstructions) {
     if (SystemState == false) { // cas d'un ARU
@@ -125,7 +103,7 @@ void Grave() {
     }
 
     if (Lettres_IESN[i].engrave == true) {
-      SetLaser(15);
+      SetLaser(mainLaserPower);
       GoTo_AdaptedSpeed(Lettres_IESN[i].x, Lettres_IESN[i].y, Speed);
       SetLaser(0);
     }
@@ -134,30 +112,49 @@ void Grave() {
     }
     i++;
     GravingPercent(i, numInstructions);
+    UpdateLCDPositions();
+    if (millis() - oldUpdate >= 5000) {
+      computedTime = ComputeEngravingTime(Speed, numInstructions, i);
+      lcd.setCursor(15, 2);
+      lcd.print(SecsToTimeString(computedTime));
+      oldUpdate = millis();
+    }
   }
   if (SystemState == false) { // cas d'un ARU
     return;
   }
 
   int engravingTime = (millis() - startMillis) / 1000; // en secondes
-  Serial.println(millis() - startMillis);
-  Serial.println(engravingTime);
   totalEngravingTime = totalEngravingTime + engravingTime;
   totalEngravingCount += 1;
   saveEEPROM_Data();
   GoTo(0, 0);
-  oldScreen = 255;
+  DisplayCurrentScreen();
+  JobDoneSound();
 }
 
 void GravingPercent(float currentStep, float maxSteps) {
   int percent;
   percent = (int)((currentStep / maxSteps) * 100);
-  Serial.print("Job Percent: ");
-  Serial.print(percent);
-  Serial.println("%");
   lcd.setCursor(13, 0);
   lcd.print(percent);
   lcd.print("%]");
   PrintProgressBar(percent, 1);
-  UpdateLCDPositions();
+}
+
+int ComputeEngravingTime(float Speed, int numInstructions, int currentInstruction) {
+  float k = 6.3;
+  double computeTime = 0;
+  for (int i = currentInstruction; i < numInstructions; i++) {
+    int deltaX = abs(Lettres_IESN[i].x - Lettres_IESN[i + 1].x);
+    int deltaY = abs(Lettres_IESN[i].y - Lettres_IESN[i + 1].y);
+    if (deltaX > deltaY) {
+      computeTime += abs((k * deltaX) / (Speed / 10));
+    }
+    else {
+      computeTime += abs((k * deltaY) / (Speed / 10));
+    }
+  }
+
+  return computeTime / 60;
 }

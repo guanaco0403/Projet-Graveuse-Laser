@@ -2,20 +2,25 @@
 #include <LiquidCrystal_I2C.h>
 #include <EEPROM.h>
 
-#define laser 2
-#define stepX_dir 22
-#define stepX_step 3
-#define stepY_dir 23
-#define stepY_step 4
-#define endX 24
-#define endY 25
-#define JoyX A2
-#define JoyY A3
-#define Joy_Switch 26
-#define ARU 18
+#define laser 9
+#define stepX_dir 6
+#define stepX_step 5
+#define stepY_dir 8
+#define stepY_step 7
+#define en_X 22
+#define en_Y 23
+#define endX 26
+#define endY1 27
+#define endY2 3
+#define JoyX A9
+#define JoyY A8
+#define Joy_Switch 30
+#define ARU 2
+#define buzzer 4
+#define led_ARU 31
 
-#define MAX_X 6400 // 400 step = 1cm
-#define MAX_Y 6000
+#define MAX_X 13500 // 400 step = 1cm
+#define MAX_Y 17000
 
 AccelStepper stepper_X(AccelStepper::DRIVER, stepX_step, stepX_dir);
 AccelStepper stepper_Y(AccelStepper::DRIVER, stepY_step, stepY_dir);
@@ -28,6 +33,9 @@ int totalEngravingTime = 0;
 
 byte currentScreen = 0;
 byte oldScreen = 255;
+
+int mainSpeed = 0;
+int mainLaserPower = 0;
 
 bool SystemState = true;
 
@@ -47,11 +55,16 @@ void setup() {
   pinMode(stepX_step, OUTPUT);
   pinMode(stepY_dir, OUTPUT);
   pinMode(stepY_step, OUTPUT);
+  pinMode(en_X, OUTPUT);
+  pinMode(en_Y, OUTPUT);
   pinMode(endX, INPUT_PULLUP);
-  pinMode(endY, INPUT_PULLUP);
+  pinMode(endY1, INPUT_PULLUP);
+  pinMode(endY2, INPUT_PULLUP);
   pinMode(laser, OUTPUT);
   pinMode(Joy_Switch, INPUT_PULLUP);
   pinMode(ARU, INPUT_PULLUP);
+  pinMode(buzzer, OUTPUT);
+  pinMode(led_ARU, OUTPUT);
 
   attachInterrupt(digitalPinToInterrupt(ARU), ARU_INTERRUPT , FALLING);
 
@@ -60,55 +73,24 @@ void setup() {
   stepper_Y.setMaxSpeed(4000);
   stepper_Y.setAcceleration(8000);
 
-  Serial.println("Laser Engraver Starting...");
-  Serial.println("Powered by zebi OS 1.0");
-
   lcd.init();
   lcd.init();
   lcd.backlight();
   lcd.setCursor(3, 0);
   lcd.print("Laser Engraver");
-  lcd.setCursor(4, 2);
-  lcd.print("Powered by");
-  lcd.setCursor(4, 3);
-  lcd.print("zebi OS 1.0");
-
-  delay(2000);
-
-  /*lcd.clear();
-  lcd.setCursor(3, 0);
-  lcd.print("Laser Engraver");
-  // Homing process
-  //Serial.println("Homing X Axis");
-  lcd.setCursor(0, 2);
-  lcd.print("   Homing X Axis    ");
-  Home(stepper_X, endX);
-  //Serial.println("Homing Y Axis");
-  lcd.setCursor(0, 2);
-  lcd.print("   Homing Y Axis    ");
-  Home(stepper_Y, endY);*/
-  AutoHome();
-
-  //GoTo(1000, 1000);
-  //analogWrite(3, 1);
-  //GoTo(6400, 0);
-  //while(true){;}
-  lcd.setCursor(0, 2);
-  lcd.print("    Laser Ready    ");
-  //EEPROM.put(0, 0);
-  //EEPROM.put(3, 0);
+  
+  BootSound();
   GetEEPROM_Data();
+
+  if (digitalRead(ARU) == LOW) {
+    ARU_INTERRUPT();
+  } else {
+    EnableStepperMotorPower();
+    AutoHome();
+  }
 }
 
 void loop() {
-  /*ManualMotorMove();
-    if (digitalRead(Joy_Switch) == LOW) {
-    stepper_X.setMaxSpeed(4000);
-    stepper_X.setAcceleration(8000);
-    stepper_Y.setMaxSpeed(4000);
-    stepper_Y.setAcceleration(8000);
-    Grave();
-    }*/
   if (currentScreen != oldScreen) {
     DisplayCurrentScreen();
     oldScreen = currentScreen;
@@ -117,13 +99,15 @@ void loop() {
   if (currentScreen == 40) {
     ManualMotorMove();
   }
-  else if (currentScreen == 100) {
-    JoyInput input = CheckInputs();
-    if (input == PRESS && digitalRead(ARU) == HIGH) {
-      SystemState = true;
-      AutoHome();
+  else if (currentScreen == 10) {
+    //SettingsPage();
+    /*JoyInput input = CheckInputs();
+    if (input == PRESS) {
       currentScreen = 0;
-    }
+    }*/
+  }
+  else if (currentScreen == 100) {
+    CheckARU_ACK();
   }
 
   if (currentScreen <= 3) {
@@ -139,6 +123,10 @@ void loop() {
             Grave();
           } else if (currentScreen == 2) {
             currentScreen = 40;
+            delay(300);
+            SetLaser(1);
+          } else if (currentScreen == 3) {
+            currentScreen = 10;
             delay(300);
           }
           break;
@@ -162,54 +150,6 @@ void loop() {
       }
     }
   }
-}
-
-void AutoHome() {
-  lcd.clear();
-  lcd.setCursor(3, 0);
-  lcd.print("Laser Engraver");
-  lcd.setCursor(0, 2);
-  lcd.print("   Homing X Axis    ");
-  HomeAxis(stepper_X, endX);
-  lcd.setCursor(0, 2);
-  lcd.print("   Homing Y Axis    ");
-  HomeAxis(stepper_Y, endY);
-}
-
-void HomeAxis(AccelStepper stepper, char sensor) {
-  stepper.setSpeed(-3000);  // Set speed to move toward the endstop (negative direction)
-  while (digitalRead(sensor) == HIGH) {
-    if (SystemState == false) { // cas d'un ARU
-      return;
-    }
-    stepper.runSpeed();  // Keep moving until the endstop is triggered
-  }
-
-  stepper.stop();  // Stop the motor once the endstop is hit
-  stepper.setCurrentPosition(0);  // Set current position as 0 (home position)
-
-  // Optionally move away from the endstop and re-home for better accuracy
-  stepper.setSpeed(1000);  // Move away slowly
-  stepper.move(400);  // Move a small amount away from the endstop
-  while (stepper.distanceToGo() != 0) {
-    if (SystemState == false) { // cas d'un ARU
-      return;
-    }
-    stepper.run();  // Run until we've moved a small distance away
-  }
-
-  // Re-home at slower speed
-  stepper.setSpeed(-500);  // Slow speed toward endstop
-  while (digitalRead(sensor) == HIGH) {
-    if (SystemState == false) { // cas d'un ARU
-      return;
-    }
-    stepper.runSpeed();  // Re-home to improve accuracy
-  }
-
-  stepper.stop();  // Stop motor at home position
-  stepper.setCurrentPosition(0);  // Reset position to 0 again (accurate home position)
-  Serial.println(stepper.currentPosition());
 }
 
 void GoTo(int X, int Y) {
@@ -288,16 +228,12 @@ void GoTo_AdaptedSpeed(int targetX, int targetY, int baseSpeed) {
 void SetLaser(byte power) {
   if (power == 0) {
     analogWrite(laser, 0);
-    Serial.println("Laser Power OFF");
   }
   else if (power == 1 && SystemState) {
     analogWrite(laser, 1);
-    Serial.println("Laser Power PWM: 1");
   }
   else if (SystemState) {
     int pwmValue = map(power, 2, 100, 5, 255);
     analogWrite(laser, pwmValue);
-    Serial.print("Laser Power PWM: ");
-    Serial.println(pwmValue);
   }
 }

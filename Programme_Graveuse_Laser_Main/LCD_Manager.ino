@@ -1,3 +1,5 @@
+int subIndex = 0;
+
 void DisplayCurrentScreen() {
   int minutes = 0;
   int seconds = 0;
@@ -22,17 +24,11 @@ void DisplayCurrentScreen() {
       lcd.setCursor(0, 1);
       lcd.print("Engr Count: ");
       lcd.print(totalEngravingCount);
-
-      minutes = totalEngravingTime / 60;
-      seconds = totalEngravingTime % 60;
-      timeBuffer[6];
-      sprintf(timeBuffer, "%02d:%02d", minutes, seconds);
       lcd.setCursor(0, 2);
       lcd.print("Engr Time: ");
-      lcd.print(timeBuffer);
+      lcd.print(SecsToTimeString(totalEngravingTime));
       break;
     case 2:
-      Serial.println("Screen2");
       lcd.clear();
       lcd.setCursor(2, 1);
       lcd.print("Manual Control");
@@ -41,6 +37,17 @@ void DisplayCurrentScreen() {
       lcd.clear();
       lcd.setCursor(6, 1);
       lcd.print("Settings");
+      break;
+    case 10:
+      lcd.clear();
+      lcd.setCursor(4, 0);
+      lcd.print("Settings Menu");
+      lcd.setCursor(0, 1);
+      lcd.print("Speed:");
+      lcd.setCursor(0, 2);
+      lcd.print("Laser Power:");
+      UpdateLCDSettingMenu();
+      SettingsManager();
       break;
     case 40:
       lcd.clear();
@@ -61,8 +68,6 @@ void DisplayCurrentScreen() {
   }
 }
 
-
-
 void PrintProgressBar(int percent, int line) {
   lcd.setCursor(0, 1);
   lcd.print("[");
@@ -77,6 +82,76 @@ void PrintProgressBar(int percent, int line) {
   lcd.print("]");
 }
 
+void SettingsManager() {
+  JoyInput input = CheckInputs();
+  while (input != PRESS) {
+    input = CheckInputs();
+    Serial.println(input);
+
+    if (input != NONE) {
+      if (input == DOWN) {
+        if (subIndex > 0) {
+          subIndex--;
+        }
+        else {
+          subIndex = 1;
+        }
+      }
+      else if (input == UP) {
+        if (subIndex < 1) {
+          subIndex++;
+        }
+        else {
+          subIndex = 0;
+        }
+      }
+      else if (input == RIGHT) {
+        if (subIndex == 0) {
+          if (mainSpeed < 100) {
+            mainSpeed ++;
+          }
+        }
+        else if (subIndex == 1) {
+          if (mainLaserPower < 100) {
+            mainLaserPower ++;
+          }
+        }
+        saveEEPROM_Data();
+      }
+      else if (input == LEFT) {
+        if (subIndex == 0) {
+          if (mainSpeed > 0) {
+            mainSpeed --;
+          }
+        }
+        else if (subIndex == 1) {
+          if (mainLaserPower > 0) {
+            mainLaserPower --;
+          }
+        }
+        saveEEPROM_Data();
+      }
+      UpdateLCDSettingMenu();
+    }
+  }
+  currentScreen = 0;
+  DisplayCurrentScreen();
+}
+
+void UpdateLCDSettingMenu() {
+  if (subIndex == 0) {
+    lcd.setCursor(7, 1);
+    lcd.print("<" + String(mainSpeed) + "%>  ");
+    lcd.setCursor(13, 2);
+    lcd.print(" " + String(mainLaserPower) + "%   ");
+  } else if (subIndex == 1) {
+    lcd.setCursor(7, 1);
+    lcd.print(" " + String(mainSpeed) + "%   ");
+    lcd.setCursor(13, 2);
+    lcd.print("<" + String(mainLaserPower) + "%>  ");
+  }
+}
+
 void UpdateLCDPositions() {
   lcd.setCursor(0, 2);
   lcd.print("X:");
@@ -86,4 +161,12 @@ void UpdateLCDPositions() {
   lcd.print("Y:");
   lcd.print(stepper_Y.currentPosition());
   lcd.print("   ");
+}
+
+String SecsToTimeString(int totalTime) {
+  int minutes = totalTime / 60;
+  int seconds = totalTime % 60;
+  char timeBuffer[6];
+  sprintf(timeBuffer, "%02d:%02d", minutes, seconds);
+  return timeBuffer;
 }

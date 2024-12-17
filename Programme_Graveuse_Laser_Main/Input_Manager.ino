@@ -18,29 +18,30 @@ JoyInput CheckInputs() {
   joystickYVal = analogRead(JoyY) - 512;
   if (joystickXVal > 400) {
     delay(350);
-    return RIGHT;
+    return LEFT;
   } else if (joystickXVal < -400) {
     delay(350);
-    return LEFT;
+    return RIGHT;
   } else if (joystickYVal > 400) {
     delay(350);
-    return UP;
+    return DOWN;
   } else if (joystickYVal < -400) {
     delay(350);
-    return DOWN;
+    return UP;
   }
   return NONE;
 }
 
 void ManualMotorMove() {
   if (digitalRead(Joy_Switch) == LOW) {
+    SetLaser(0);
     stepper_X.stop();
     stepper_Y.stop();
     currentScreen = 0;
   }
 
   joystickXVal = analogRead(JoyX) - 512;
-  joystickYVal = analogRead(JoyY) - 512;
+  joystickYVal = (-analogRead(JoyY)) + 512;
 
   // Adjust X motor speed based on joystick input
   int speedX;
