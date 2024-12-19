@@ -74,15 +74,16 @@ Instruction Lettres_IESN[] = {
 };
 
 void Grave() {
-  int Speed = mainSpeed*40;
+  int Speed = mainSpeed * 40;
   int numInstructions = sizeof(Lettres_IESN) / sizeof(Lettres_IESN[0]);
   int i = 0;
+
+  int offsetX = 500;
+  int offsetY = 50;
 
   JobStartSound();
 
   // Auto Homing pour la sécurité
-  stepper_X.stop();
-  stepper_Y.stop();
   AutoHome();
   //
 
@@ -106,11 +107,11 @@ void Grave() {
 
     if (Lettres_IESN[i].engrave == true) {
       SetLaser(mainLaserPower);
-      GoTo_AdaptedSpeed(Lettres_IESN[i].x, Lettres_IESN[i].y, Speed);
+      GoTo_AdaptedSpeed(Lettres_IESN[i].x + offsetX , Lettres_IESN[i].y + offsetY, Speed);
       SetLaser(0);
     }
     else {
-      GoTo(Lettres_IESN[i].x, Lettres_IESN[i].y);
+      GoTo(Lettres_IESN[i].x + offsetX, Lettres_IESN[i].y + offsetY);
     }
     i++;
     GravingPercent(i, numInstructions);
@@ -133,15 +134,6 @@ void Grave() {
   GoTo(0, 0);
   DisplayCurrentScreen();
   JobDoneSound();
-}
-
-void GravingPercent(float currentStep, float maxSteps) {
-  int percent;
-  percent = (int)((currentStep / maxSteps) * 100);
-  lcd.setCursor(13, 0);
-  lcd.print(percent);
-  lcd.print("%]");
-  PrintProgressBar(percent, 1);
 }
 
 int ComputeEngravingTime(float Speed, int numInstructions, int currentInstruction) {

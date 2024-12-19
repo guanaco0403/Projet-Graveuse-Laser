@@ -10,10 +10,6 @@ void DisableStepperMotorPower() {
 
 // HOMING
 void AutoHome() {
-  /*stepper_X.setCurrentPosition(0);
-  stepper_Y.setCurrentPosition(0);
-  return;*/
-  
   lcd.clear();
   lcd.setCursor(3, 0);
   lcd.print("Laser Engraver");
@@ -52,7 +48,7 @@ void AutoHome() {
 
   stepper_X.stop();  // Stop motor at home position
   stepper_X.setCurrentPosition(0);  // Reset position to 0 again (accurate home position)
-  //Serial.println(stepper.currentPosition());
+  
   // END X HOMING
   lcd.setCursor(0, 2);
   lcd.print("   Homing Y Axis    ");

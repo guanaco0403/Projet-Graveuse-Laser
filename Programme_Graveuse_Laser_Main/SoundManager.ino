@@ -1,5 +1,5 @@
 void BootSound() {
-  tone(buzzer, 660, 100);
+  /*tone(buzzer, 660, 100);
   delay(150);
   tone(buzzer, 660, 100);
   delay(300);
@@ -12,7 +12,7 @@ void BootSound() {
   tone(buzzer, 770, 100);
   delay(550);
   tone(buzzer, 380, 100);
-  delay(200);
+  delay(200);*/
 }
 
 void JobDoneSound() {

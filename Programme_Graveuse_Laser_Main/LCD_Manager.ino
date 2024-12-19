@@ -1,5 +1,3 @@
-int subIndex = 0;
-
 void DisplayCurrentScreen() {
   int minutes = 0;
   int seconds = 0;
@@ -48,8 +46,8 @@ void DisplayCurrentScreen() {
       lcd.print("Laser Power:");
       lcd.setCursor(2, 3);
       lcd.print("[PRESS] to exit");
-      UpdateLCDSettingMenu();
-      SettingsManager();
+      UpdateLCDSettingMenu(0);
+      //SettingsManager();
       break;
     case 40:
       lcd.clear();
@@ -90,75 +88,13 @@ void PrintProgressBar(int percent, int line) {
   lcd.print("]");
 }
 
-void SettingsManager() {
-  JoyInput input = CheckInputs();
-  while (input != PRESS) {
-    input = CheckInputs();
-
-    if (input != NONE) {
-      if (input == DOWN) {
-        if (subIndex > 0) {
-          subIndex--;
-        }
-        else {
-          subIndex = 1;
-        }
-        Beep2();
-      }
-      else if (input == UP) {
-        if (subIndex < 1) {
-          subIndex++;
-        }
-        else {
-          subIndex = 0;
-        }
-        Beep2();
-      }
-      else if (input == RIGHT) {
-        if (subIndex == 0) {
-          if (mainSpeed < 100) {
-            mainSpeed ++;
-            Beep2();
-          }
-        }
-        else if (subIndex == 1) {
-          if (mainLaserPower < 100) {
-            mainLaserPower ++;
-            Beep2();
-          }
-        }
-        saveEEPROM_Data();
-      }
-      else if (input == LEFT) {
-        if (subIndex == 0) {
-          if (mainSpeed > 0) {
-            mainSpeed --;
-            Beep2();
-          }
-        }
-        else if (subIndex == 1) {
-          if (mainLaserPower > 0) {
-            mainLaserPower --;
-            Beep2();
-          }
-        }
-        saveEEPROM_Data();
-      }
-      UpdateLCDSettingMenu();
-    }
-  }
-  Beep();
-  currentScreen = 0;
-  DisplayCurrentScreen();
-}
-
-void UpdateLCDSettingMenu() {
-  if (subIndex == 0) {
+void UpdateLCDSettingMenu(int settingIndex) {
+  if (settingIndex == 0) {
     lcd.setCursor(7, 1);
     lcd.print("<" + String(mainSpeed) + "%>  ");
     lcd.setCursor(13, 2);
     lcd.print(" " + String(mainLaserPower) + "%   ");
-  } else if (subIndex == 1) {
+  } else if (settingIndex == 1) {
     lcd.setCursor(7, 1);
     lcd.print(" " + String(mainSpeed) + "%   ");
     lcd.setCursor(13, 2);
@@ -175,6 +111,15 @@ void UpdateLCDPositions() {
   lcd.print("Y:");
   lcd.print(stepper_Y.currentPosition());
   lcd.print("   ");
+}
+
+void GravingPercent(float currentStep, float maxSteps) {
+  int percent;
+  percent = (int)((currentStep / maxSteps) * 100);
+  lcd.setCursor(13, 0);
+  lcd.print(percent);
+  lcd.print("%]");
+  PrintProgressBar(percent, 1);
 }
 
 String SecsToTimeString(int totalTime) {
