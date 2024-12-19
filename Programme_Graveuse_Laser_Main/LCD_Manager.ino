@@ -30,7 +30,7 @@ void DisplayCurrentScreen() {
       break;
     case 2:
       lcd.clear();
-      lcd.setCursor(2, 1);
+      lcd.setCursor(3, 1);
       lcd.print("Manual Control");
       break;
     case 3:
@@ -40,19 +40,27 @@ void DisplayCurrentScreen() {
       break;
     case 10:
       lcd.clear();
-      lcd.setCursor(4, 0);
-      lcd.print("Settings Menu");
+      lcd.setCursor(2, 0);
+      lcd.print("[Settings Menu]");
       lcd.setCursor(0, 1);
       lcd.print("Speed:");
       lcd.setCursor(0, 2);
       lcd.print("Laser Power:");
+      lcd.setCursor(2, 3);
+      lcd.print("[PRESS] to exit");
       UpdateLCDSettingMenu();
       SettingsManager();
       break;
     case 40:
       lcd.clear();
-      lcd.setCursor(6, 1);
-      lcd.print("Manual Mode");
+      lcd.setCursor(3, 0);
+      lcd.print("[Manual Mode]");
+      lcd.setCursor(2, 1);
+      lcd.print("Use the joystick");
+      lcd.setCursor(3, 2);
+      lcd.print("for movements");
+      lcd.setCursor(2, 3);
+      lcd.print("[PRESS] to exit");
       break;
     case 100:
       lcd.clear();
@@ -86,7 +94,6 @@ void SettingsManager() {
   JoyInput input = CheckInputs();
   while (input != PRESS) {
     input = CheckInputs();
-    Serial.println(input);
 
     if (input != NONE) {
       if (input == DOWN) {
@@ -96,6 +103,7 @@ void SettingsManager() {
         else {
           subIndex = 1;
         }
+        Beep2();
       }
       else if (input == UP) {
         if (subIndex < 1) {
@@ -104,16 +112,19 @@ void SettingsManager() {
         else {
           subIndex = 0;
         }
+        Beep2();
       }
       else if (input == RIGHT) {
         if (subIndex == 0) {
           if (mainSpeed < 100) {
             mainSpeed ++;
+            Beep2();
           }
         }
         else if (subIndex == 1) {
           if (mainLaserPower < 100) {
             mainLaserPower ++;
+            Beep2();
           }
         }
         saveEEPROM_Data();
@@ -122,11 +133,13 @@ void SettingsManager() {
         if (subIndex == 0) {
           if (mainSpeed > 0) {
             mainSpeed --;
+            Beep2();
           }
         }
         else if (subIndex == 1) {
           if (mainLaserPower > 0) {
             mainLaserPower --;
+            Beep2();
           }
         }
         saveEEPROM_Data();
@@ -134,6 +147,7 @@ void SettingsManager() {
       UpdateLCDSettingMenu();
     }
   }
+  Beep();
   currentScreen = 0;
   DisplayCurrentScreen();
 }

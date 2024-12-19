@@ -78,6 +78,8 @@ void Grave() {
   int numInstructions = sizeof(Lettres_IESN) / sizeof(Lettres_IESN[0]);
   int i = 0;
 
+  JobStartSound();
+
   // Auto Homing pour la sécurité
   stepper_X.stop();
   stepper_Y.stop();

@@ -34,6 +34,7 @@ JoyInput CheckInputs() {
 
 void ManualMotorMove() {
   if (digitalRead(Joy_Switch) == LOW) {
+    Beep();
     SetLaser(0);
     stepper_X.stop();
     stepper_Y.stop();

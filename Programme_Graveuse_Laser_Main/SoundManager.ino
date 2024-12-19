@@ -32,3 +32,19 @@ void JobDoneSound() {
   delay(1000);
   noTone(buzzer);
 }
+
+void JobStartSound() {
+  tone(buzzer, 1200);
+  delay(400);
+  tone(buzzer, 1800);
+  delay(800);
+  noTone(buzzer);
+}
+
+void Beep() {
+  tone(buzzer, 2000, 100);
+}
+
+void Beep2() {
+  tone(buzzer, 100, 25);
+}

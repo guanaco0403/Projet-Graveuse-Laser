@@ -99,13 +99,13 @@ void loop() {
   if (currentScreen == 40) {
     ManualMotorMove();
   }
-  else if (currentScreen == 10) {
+  /*else if (currentScreen == 10) {
     //SettingsPage();
     /*JoyInput input = CheckInputs();
     if (input == PRESS) {
       currentScreen = 0;
-    }*/
-  }
+    }
+  }*/
   else if (currentScreen == 100) {
     CheckARU_ACK();
   }
@@ -122,10 +122,12 @@ void loop() {
             stepper_Y.setAcceleration(8000);
             Grave();
           } else if (currentScreen == 2) {
+            Beep();
             currentScreen = 40;
             delay(300);
             SetLaser(1);
           } else if (currentScreen == 3) {
+            Beep();
             currentScreen = 10;
             delay(300);
           }
@@ -137,6 +139,7 @@ void loop() {
           else {
             currentScreen = 0;
           }
+          Beep2();
           break;
 
         case LEFT:
@@ -146,6 +149,7 @@ void loop() {
           else {
             currentScreen = 3;
           }
+          Beep2();
           break;
       }
     }
