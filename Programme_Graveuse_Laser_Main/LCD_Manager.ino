@@ -1,8 +1,23 @@
-void DisplayCurrentScreen() {
-  int minutes = 0;
-  int seconds = 0;
-  char timeBuffer[6];
+/*
+ * Gestion du LCD
+ * 
+ * Menus (currentScreen):
+ *  - 0   Menu Principal
+ *  - 1   Statistiques
+ *  - 2   Selection Mode Manuel
+ *  - 3   Selection Mode Paramètrage
+ *  - 10  Mode Paramètrage
+ *  - 40  Mode Manuel
+ *  - 100 Menu Arrêt D'urgence
+ */
 
+/* Fonction qui permet l'affichage du menu actuel a l'écran */
+void DisplayCurrentScreen() {
+  int minutes = 0; // Variable locale pour retenir les minutes
+  int seconds = 0; // Variable locale pour retenir les secondes
+  char timeBuffer[6]; // Variable locale pour retenir le buffer de temps
+
+  // On check dans quel menu on est pour afficher le bon menu a l'écran
   switch (currentScreen) {
     case 0:
       lcd.clear();
@@ -46,8 +61,7 @@ void DisplayCurrentScreen() {
       lcd.print("Laser Power:");
       lcd.setCursor(2, 3);
       lcd.print("[PRESS] to exit");
-      UpdateLCDSettingMenu(0);
-      //SettingsManager();
+      UpdateLCDSettingMenu(0); // On affiche les valeurs des paramètres a l'écran
       break;
     case 40:
       lcd.clear();
@@ -74,11 +88,14 @@ void DisplayCurrentScreen() {
   }
 }
 
+/* Fonction pour imprimer une barre de progression a un certain pourcentage a une certaine ligne de l'écran */
 void PrintProgressBar(int percent, int line) {
   lcd.setCursor(0, 1);
   lcd.print("[");
-  int convert = map(percent, 0, 100, 0, 18);
+  int convert = map(percent, 0, 100, 0, 18); // Map pour transformer le pourcentage en un nombre de "=" a l'écran
   int i = 0;
+
+  // Impression des "=" a l'écran pour la barre de progression
   for (i; i < convert; i++) {
     lcd.print("=");
   }
@@ -88,6 +105,7 @@ void PrintProgressBar(int percent, int line) {
   lcd.print("]");
 }
 
+/* Fonction pour afficher les valeurs des paramètres sur l'écran ainsi que d'afficher le quel est sélectionné actuellement */
 void UpdateLCDSettingMenu(int settingIndex) {
   if (settingIndex == 0) {
     lcd.setCursor(7, 1);
@@ -102,6 +120,7 @@ void UpdateLCDSettingMenu(int settingIndex) {
   }
 }
 
+/* Fonction pour afficher les coordonées actuelles du laser a l'écran */
 void UpdateLCDPositions() {
   lcd.setCursor(0, 2);
   lcd.print("X:");
@@ -113,19 +132,21 @@ void UpdateLCDPositions() {
   lcd.print("   ");
 }
 
+/* Fonction pour calculer et afficher le pourcentage de la progression de la gravure sur l'écran */
 void GravingPercent(float currentStep, float maxSteps) {
   int percent;
-  percent = (int)((currentStep / maxSteps) * 100);
+  percent = (int)((currentStep / maxSteps) * 100); // Calcul du pourcentage
   lcd.setCursor(13, 0);
   lcd.print(percent);
   lcd.print("%]");
-  PrintProgressBar(percent, 1);
+  PrintProgressBar(percent, 1); // Affichage de la barre de progression a la ligne 1 de l'écran
 }
 
+/* Fonction pour convertir un temps en secondes en string [minutes:secondes] */
 String SecsToTimeString(int totalTime) {
-  int minutes = totalTime / 60;
-  int seconds = totalTime % 60;
+  int minutes = totalTime / 60; // Calcul des minutes
+  int seconds = totalTime % 60; // Calcul des secondes
   char timeBuffer[6];
-  sprintf(timeBuffer, "%02d:%02d", minutes, seconds);
-  return timeBuffer;
+  sprintf(timeBuffer, "%02d:%02d", minutes, seconds); // Convertion des minutes et secondes en string [minutes:secondes]
+  return timeBuffer; // On retourne le string
 }

@@ -1,89 +1,94 @@
+/* Fonction pour activer les drivers */
 void EnableStepperMotorPower() {
   digitalWrite(en_X, LOW);
   digitalWrite(en_Y, LOW);
 }
 
+/* Fonction pour Désactiver les drivers */
 void DisableStepperMotorPower() {
   digitalWrite(en_X, HIGH);
   digitalWrite(en_Y, HIGH);
 }
 
-// HOMING
+/* Fonction de Homing des axes de la machine */
 void AutoHome() {
-  lcd.clear();
-  lcd.setCursor(3, 0);
-  lcd.print("Laser Engraver");
-  lcd.setCursor(0, 2);
-  lcd.print("   Homing X Axis    ");
-  //HomeAxis(stepper_X, endX);
-  stepper_X.setSpeed(-3000);  // Set speed to move toward the endstop (negative direction)
-  while (digitalRead(endX) == HIGH) {
-    if (SystemState == false) { // cas d'un ARU
-      return;
+  lcd.clear(); // Effacer l'écran LCD
+  lcd.setCursor(3, 0); // Positionner le curseur sur la ligne 1, colonne 3
+  lcd.print("Laser Engraver"); // Afficher "Laser Engraver" sur l'écran
+  lcd.setCursor(0, 2); // Positionner le curseur sur la ligne 3, colonne 0
+  lcd.print("   Homing X Axis    "); // Afficher "Homing X Axis" pour indiquer le calibrage de l'axe X
+
+  // Calibration de l'axe X
+  stepper_X.setSpeed(-3000);  // Définir la vitesse pour se déplacer vers l'endstop (direction négative)
+  while (digitalRead(endX) == HIGH) { // Boucle jusqu'à ce que l'endstop soit activé
+    if (SystemState == false) { // Vérification d'un arrêt d'urgence (ARU)
+      return; // Sortie immédiate de la fonction en cas d'ARU
     }
-    stepper_X.runSpeed();  // Keep moving until the endstop is triggered
+    stepper_X.runSpeed();  // Continuer à se déplacer vers l'endstop
   }
 
-  stepper_X.stop();  // Stop the motor once the endstop is hit
-  stepper_X.setCurrentPosition(0);  // Set current position as 0 (home position)
+  stepper_X.stop();  // Arrêter le moteur lorsque l'endstop est atteint
+  stepper_X.setCurrentPosition(0);  // Définir la position actuelle comme 0 (position de départ)
 
-  // Optionally move away from the endstop and re-home for better accuracy
-  stepper_X.setSpeed(1000);  // Move away slowly
-  stepper_X.move(400);  // Move a small amount away from the endstop
-  while (stepper_X.distanceToGo() != 0) {
-    if (SystemState == false) { // cas d'un ARU
-      return;
+  // Optionnel : s'éloigner légèrement de l'endstop pour plus de précision
+  stepper_X.setSpeed(1000);  // Définir une vitesse lente
+  stepper_X.move(400);  // S'éloigner de 400 unités de l'endstop
+  while (stepper_X.distanceToGo() != 0) { // Attendre que le mouvement soit terminé
+    if (SystemState == false) { // Vérification d'un ARU
+      return; // Sortie immédiate en cas d'ARU
     }
-    stepper_X.run();  // Run until we've moved a small distance away
+    stepper_X.run();  // Effectuer le mouvement
   }
 
-  // Re-home at slower speed
-  stepper_X.setSpeed(-500);  // Slow speed toward endstop
-  while (digitalRead(endX) == HIGH) {
-    if (SystemState == false) { // cas d'un ARU
-      return;
+  // Re-calibrage à vitesse lente
+  stepper_X.setSpeed(-500);  // Définir une vitesse lente pour revenir vers l'endstop
+  while (digitalRead(endX) == HIGH) { // Boucle jusqu'à atteindre l'endstop
+    if (SystemState == false) { // Vérification d'un ARU
+      return; // Sortie immédiate en cas d'ARU
     }
-    stepper_X.runSpeed();  // Re-home to improve accuracy
+    stepper_X.runSpeed();  // Continuer à se déplacer vers l'endstop
   }
 
-  stepper_X.stop();  // Stop motor at home position
-  stepper_X.setCurrentPosition(0);  // Reset position to 0 again (accurate home position)
-  
-  // END X HOMING
-  lcd.setCursor(0, 2);
-  lcd.print("   Homing Y Axis    ");
-  //HomeAxis(stepper_Y, endY);
-  stepper_Y.setSpeed(-3000);  // Set speed to move toward the endstop (negative direction)
-  while (digitalRead(endY1) == HIGH || digitalRead(endY2) == HIGH) {
-    if (SystemState == false) { // cas d'un ARU
-      return;
+  stepper_X.stop();  // Arrêter le moteur
+  stepper_X.setCurrentPosition(0);  // Redéfinir la position actuelle comme 0 (position exacte de départ)
+
+  // FIN DU CALIBRAGE DE L'AXE X
+  lcd.setCursor(0, 2); // Positionner le curseur sur la ligne 3, colonne 0
+  lcd.print("   Homing Y Axis    "); // Afficher "Homing Y Axis" pour indiquer le calibrage de l'axe Y
+
+  // Calibration de l'axe Y
+  stepper_Y.setSpeed(-3000);  // Définir la vitesse pour se déplacer vers l'endstop (direction négative)
+  while (digitalRead(endY1) == HIGH || digitalRead(endY2) == HIGH) { // Boucle jusqu'à ce qu'un des endstops soit activé
+    if (SystemState == false) { // Vérification d'un ARU
+      return; // Sortie immédiate en cas d'ARU
     }
-    stepper_Y.runSpeed();  // Keep moving until the endstop is triggered
+    stepper_Y.runSpeed();  // Continuer à se déplacer vers l'endstop
   }
 
-  stepper_Y.stop();  // Stop the motor once the endstop is hit
-  stepper_Y.setCurrentPosition(0);  // Set current position as 0 (home position)
+  stepper_Y.stop();  // Arrêter le moteur lorsque l'endstop est atteint
+  stepper_Y.setCurrentPosition(0);  // Définir la position actuelle comme 0 (position de départ)
 
-  // Optionally move away from the endstop and re-home for better accuracy
-  stepper_Y.setSpeed(1000);  // Move away slowly
-  stepper_Y.move(400);  // Move a small amount away from the endstop
-  while (stepper_Y.distanceToGo() != 0) {
-    if (SystemState == false) { // cas d'un ARU
-      return;
+  // Optionnel : s'éloigner légèrement de l'endstop pour plus de précision
+  stepper_Y.setSpeed(1000);  // Définir une vitesse lente
+  stepper_Y.move(400);  // S'éloigner de 400 unités de l'endstop
+  while (stepper_Y.distanceToGo() != 0) { // Attendre que le mouvement soit terminé
+    if (SystemState == false) { // Vérification d'un ARU
+      return; // Sortie immédiate en cas d'ARU
     }
-    stepper_Y.run();  // Run until we've moved a small distance away
+    stepper_Y.run();  // Effectuer le mouvement
   }
 
-  // Re-home at slower speed
-  stepper_Y.setSpeed(-500);  // Slow speed toward endstop
-  while (digitalRead(endY1) == HIGH || digitalRead(endY2) == HIGH) {
-    if (SystemState == false) { // cas d'un ARU
-      return;
+  // Re-calibrage à vitesse lente
+  stepper_Y.setSpeed(-500);  // Définir une vitesse lente pour revenir vers l'endstop
+  while (digitalRead(endY1) == HIGH || digitalRead(endY2) == HIGH) { // Boucle jusqu'à atteindre l'endstop
+    if (SystemState == false) { // Vérification d'un ARU
+      return; // Sortie immédiate en cas d'ARU
     }
-    stepper_Y.runSpeed();  // Re-home to improve accuracy
+    stepper_Y.runSpeed();  // Continuer à se déplacer vers l'endstop
   }
-  GoTo(0,-50); // pour bien axer les axes Y
 
-  stepper_Y.stop();  // Stop motor at home position
-  stepper_Y.setCurrentPosition(0);  // Reset position to 0 again (accurate home position)
+  GoTo(0, -50); // Ajustement final pour aligner les axes Y correctement
+
+  stepper_Y.stop();  // Arrêter le moteur
+  stepper_Y.setCurrentPosition(0);  // Redéfinir la position actuelle comme 0 (position exacte de départ)
 }

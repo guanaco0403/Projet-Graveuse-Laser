@@ -1,21 +1,23 @@
-void ARU_INTERRUPT() { // SUR LE VRAI SYSTEME IL FAUDRA UTILISER LE ENABLE ET DISABLE OUTPUT POUR LA SECU
-  SystemState = false;
-  SetLaser(0);
-  DisableStepperMotorPower();
-  stepper_X.stop();
-  stepper_Y.stop();
-  currentScreen = 100;
+/* Fonction interrupt pour l'arrêt d'urgence */
+void ARU_INTERRUPT() {
+  SystemState = false; // Mise de l'état du système a désactivé
+  SetLaser(0); // Désactivation du laser
+  DisableStepperMotorPower(); // Désactivation des drivers
+  stepper_X.stop(); // Stop du moteur X
+  stepper_Y.stop(); // Stop des moteurs Y
+  currentScreen = 100; // Mise du menu actuel au menu d'arrêt d'urgence
   oldScreen = -1;
-  digitalWrite(led_ARU, HIGH);
+  digitalWrite(led_ARU, HIGH); // Allumage led de défaut
 }
 
+/* Fonction pour vérifier l'aquitement de l'Arrêt d'urgence */
 void CheckARU_ACK() {
   JoyInput input = CheckInputs();
-  if (input == PRESS && digitalRead(ARU) == HIGH) {
-    SystemState = true;
-    digitalWrite(led_ARU, LOW);
-    EnableStepperMotorPower();
-    AutoHome();
-    currentScreen = 0;
+  if (input == PRESS && digitalRead(ARU) == HIGH) { // Si on appui sur le bouton du joystick alors on aquitte
+    SystemState = true; // Mise l'état du système a activé
+    digitalWrite(led_ARU, LOW); // Désactivation de la led de défaut
+    EnableStepperMotorPower(); // Activation des drivers
+    AutoHome(); // Auto Homing
+    currentScreen = 0; // Mise au menu principal
   }
 }
