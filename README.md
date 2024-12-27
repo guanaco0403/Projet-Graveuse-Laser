@@ -1,6 +1,6 @@
 # Graveuse Laser
 
-![Laser Engraving Machine](https://via.placeholder.com/800x400.png?text=Laser+Engraving+Machine)
+![Laser Engraving Machine](https://media.discordapp.net/attachments/1317565374895620116/1318297310739959818/dfbc80e9-d5cd-4a39-a043-5e4540c08291_1.jpg?ex=676fa74b&is=676e55cb&hm=673f9a62ff28895f0bf454ef73685ddfc1ef137b0735882aeb5b611fb112c7c2&=&format=webp&width=503&height=671)
 
 Bienvenue dans le projet **Graveuse Laser** !
 
